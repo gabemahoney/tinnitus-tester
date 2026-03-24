@@ -1077,11 +1077,23 @@ function finderReset() {
 // ═══════════════════════════════
 //  MULTI-TONAL
 // ═══════════════════════════════
-const MT_COUNT = 28;
-const MT_MIN = 500, MT_MAX = 12000;
-const mtFreqs = Array.from({length: MT_COUNT}, (_, i) =>
-  Math.round(MT_MIN * Math.pow(MT_MAX / MT_MIN, i / (MT_COUNT - 1)))
-);
+// Fixed array: sub-1k region + exact 1k increments with intermediates
+const mtFreqs = [
+  500, 625, 750, 875,
+  1000, 1250, 1500, 1750,
+  2000, 2500,
+  3000, 3500,
+  4000, 4500,
+  5000, 5500,
+  6000, 6500,
+  7000, 7500,
+  8000, 8500,
+  9000, 9500,
+  10000, 10500,
+  11000, 11500,
+  12000
+];
+const MT_COUNT = mtFreqs.length;
 
 const mtSelected = new Set();
 const mtNodes = new Map();
@@ -1102,11 +1114,7 @@ function mtBuildKeyboard() {
     key.style.height = h + 'px';
     key.dataset.i = i;
     // label keys closest to round kHz values
-    const roundKHz = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000];
-    const isLabel = roundKHz.some(target => {
-      const closest = mtFreqs.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
-      return f === closest;
-    });
+    const isLabel = f % 1000 === 0;
     if (isLabel) {
       const lbl = document.createElement('span');
       lbl.className = 'mt-key-label';
