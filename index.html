@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tinnitus Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #07090b;
+  --bg2:     #0d1217;
+  --bg3:     #141c22;
+  --border:  #1a262e;
+  --border2: #243340;
+  --text:    #c0d0d8;
+  --dim:     #4a6272;
+  --accent:  #00c8a8;
+  --accent2: #0090e0;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- HEADER ---- */
+header {
+  width: 100%;
+  max-width: 800px;
+  padding: 2.5rem 2.5rem 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.logo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .85rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.logo-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .1em;
+  color: var(--dim);
+}
+
+/* ---- TABS ---- */
+.tabs {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  padding: 0 2.5rem;
+  margin-top: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: .9rem 1.8rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); }
+
+/* ---- CONTENT ---- */
+.content {
+  width: 100%;
+  max-width: 800px;
+  padding: 2.5rem 2.5rem;
+  flex: 1;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ---- FREQ BUTTONS ---- */
+.freq-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: .6rem;
+  margin-bottom: 1.8rem;
+}
+.freq-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 1.8rem .5rem 1.2rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.2rem;
+  font-weight: 300;
+  position: relative;
+  transition: all .12s;
+  outline: none;
+}
+.freq-btn .kh {
+  position: absolute;
+  top: .45rem; right: .55rem;
+  font-size: .65rem;
+  color: var(--dim);
+  opacity: .5;
+}
+.freq-btn .edit-icon {
+  position: absolute;
+  bottom: .4rem; left: 0; right: 0;
+  font-size: .65rem;
+  color: var(--dim);
+  opacity: .5;
+  transition: opacity .15s, color .15s;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.freq-btn:hover .edit-icon { opacity: .9; color: var(--text); }
+.freq-btn .edit-icon:hover { opacity: 1 !important; color: var(--accent); }
+.freq-btn:hover { border-color: var(--border2); color: var(--text); }
+.freq-btn.sel { border-color: var(--border2); color: var(--text); background: var(--bg3); }
+.freq-btn.on { border-color: var(--accent); color: var(--accent); background: var(--bg3); box-shadow: 0 0 20px rgba(0,200,168,.12); }
+
+.freq-edit-input {
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1rem;
+  text-align: center;
+  outline: none;
+  width: 100%;
+  padding: 0;
+  display: none;
+}
+
+/* ---- PLAY ROW ---- */
+.play-row {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.8rem;
+}
+.play-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  padding: .8rem 2rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  transition: all .12s;
+  outline: none;
+}
+.play-btn:hover { border-color: var(--accent); color: var(--accent); }
+.play-btn.on { border-color: var(--accent); color: var(--accent); background: rgba(0,200,168,.04); }
+.play-status {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .1em;
+  color: var(--dim);
+}
+.play-status.on { color: var(--accent); }
+
+/* ---- WAVEFORM ---- */
+.waveform-wrap {
+  border: 1px solid var(--border);
+  height: 64px;
+  margin-bottom: 1.8rem;
+  overflow: hidden;
+}
+canvas { display: block; width: 100%; height: 100%; }
+
+/* ---- SLIDERS ---- */
+.sliders { display: flex; flex-direction: column; gap: 1.4rem; }
+.slider-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 56px;
+  align-items: center;
+  gap: 1.2rem;
+}
+.sl-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.sl-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .85rem;
+  color: var(--accent);
+  text-align: right;
+}
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--border2);
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--accent);
+  cursor: pointer;
+  border-radius: 0;
+  transition: transform .1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+/* ---- KBD HINTS ---- */
+.hints {
+  margin-top: 2rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  color: var(--dim);
+  opacity: .7;
+  text-align: center;
+  line-height: 2;
+}
+kbd {
+  border: 1px solid var(--border2);
+  padding: .15em .4em;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: .9em;
+}
+
+/* ---- FINDER STATES ---- */
+.fstate { display: none; }
+.fstate.active { display: block; }
+
+/* start */
+.start-wrap { text-align: center; padding: 4rem 0 2rem; }
+.start-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 1.4rem;
+}
+.start-desc {
+  font-size: 1rem;
+  color: var(--dim);
+  line-height: 1.8;
+  max-width: 420px;
+  margin: 0 auto 2.5rem;
+}
+.start-desc strong { color: var(--text); font-weight: 400; }
+.cta {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: .85rem 3rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  transition: background .15s;
+  outline: none;
+}
+.cta:hover { background: rgba(0,200,168,.07); }
+
+/* staircase */
+.sc-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3.5rem;
+  margin-bottom: 2.5rem;
+}
+.stat { text-align: center; }
+.stat-n {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 2.4rem;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-l {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-top: .4rem;
+}
+
+.tone-ring {
+  width: 130px; height: 130px;
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  margin: 0 auto 2rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .12em;
+  color: var(--dim);
+  transition: border-color .3s, box-shadow .3s, color .3s;
+  user-select: none;
+}
+.tone-ring.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: ripple 2.5s ease-in-out infinite;
+}
+@keyframes ripple {
+  0%,100% { box-shadow: 0 0 20px rgba(0,200,168,.1), inset 0 0 20px rgba(0,200,168,.03); }
+  50%      { box-shadow: 0 0 55px rgba(0,200,168,.22), inset 0 0 35px rgba(0,200,168,.07); }
+}
+
+.sc-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: .6rem;
+  margin-bottom: 1.5rem;
+}
+.sc-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 1.4rem .5rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  transition: all .12s;
+  outline: none;
+}
+.sc-btn .bk {
+  font-size: 1.3rem;
+  font-weight: 300;
+  color: var(--text);
+}
+.sc-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sc-btn:hover .bk { color: var(--accent); }
+
+/* finder sliders */
+.finder-sliders {
+  margin-top: 1.8rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+/* octave */
+.oct-intro { text-align: center; margin-bottom: 2rem; }
+.oct-intro h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 1rem;
+}
+.oct-intro p { font-size: .95rem; color: var(--dim); line-height: 1.7; }
+.oct-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .6rem;
+  margin-bottom: 1.5rem;
+}
+.oct-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 2.2rem 1rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  transition: all .12s;
+  outline: none;
+}
+.oct-btn .ok {
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1;
+}
+.oct-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.oct-btn:hover .ok { color: var(--accent2); }
+.oct-btn.on { border-color: var(--accent); color: var(--accent); background: rgba(0,200,168,.04); }
+.oct-btn.on .ok { color: var(--accent); }
+
+.oct-pick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .6rem;
+}
+.oct-pick-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: .9rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: all .12s;
+  outline: none;
+}
+.oct-pick-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* result */
+.result-wrap { text-align: center; padding: 3.5rem 0; }
+.result-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .78rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 1.2rem;
+}
+.result-freq {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 4.5rem;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: -.02em;
+  line-height: 1;
+  margin-bottom: .5rem;
+}
+.result-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .78rem;
+  letter-spacing: .12em;
+  color: var(--dim);
+  margin-bottom: 2.5rem;
+}
+.result-actions { display: flex; justify-content: center; gap: .8rem; }
+.act-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  padding: .7rem 1.8rem;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .78rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: all .12s;
+  outline: none;
+}
+.act-btn:hover { border-color: var(--accent); color: var(--accent); }
+.act-btn.primary { border-color: var(--accent); color: var(--accent); }
+.act-btn.primary:hover { background: rgba(0,200,168,.07); }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">Tinnitus Lab</span>
+  <span class="logo-sub">frequency matching tool</span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tab-picker" onclick="switchTab('picker')">Tone Picker</button>
+  <button class="tab"         id="tab-finder" onclick="switchTab('finder')">Tone Matcher</button>
+</div>
+
+<div class="content">
+
+  <!-- ═══ TONE PICKER ═══ -->
+  <div id="panel-picker" class="panel active">
+
+    <div class="freq-grid">
+      <button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">2</span><span id="fbl0">2k</span><span class="edit-icon" onclick="startEdit(event,0)">edit</span><input class="freq-edit-input" id="fbi0" type="number" min="100" max="16000" onblur="commitEdit(0)" onkeydown="editKey(event,0)"></button>
+      <button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">3</span><span id="fbl1">3k</span><span class="edit-icon" onclick="startEdit(event,1)">edit</span><input class="freq-edit-input" id="fbi1" type="number" min="100" max="16000" onblur="commitEdit(1)" onkeydown="editKey(event,1)"></button>
+      <button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">4</span><span id="fbl2">4k</span><span class="edit-icon" onclick="startEdit(event,2)">edit</span><input class="freq-edit-input" id="fbi2" type="number" min="100" max="16000" onblur="commitEdit(2)" onkeydown="editKey(event,2)"></button>
+      <button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">5</span><span id="fbl3">5k</span><span class="edit-icon" onclick="startEdit(event,3)">edit</span><input class="freq-edit-input" id="fbi3" type="number" min="100" max="16000" onblur="commitEdit(3)" onkeydown="editKey(event,3)"></button>
+      <button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">6</span><span id="fbl4">6k</span><span class="edit-icon" onclick="startEdit(event,4)">edit</span><input class="freq-edit-input" id="fbi4" type="number" min="100" max="16000" onblur="commitEdit(4)" onkeydown="editKey(event,4)"></button>
+    </div>
+
+    <div class="play-row">
+      <button class="play-btn" id="picker-play-btn" onclick="pickerTogglePlay()">[ Space ]&nbsp; Play</button>
+      <span class="play-status" id="picker-status">stopped</span>
+    </div>
+
+    <div class="waveform-wrap">
+      <canvas id="wfcanvas"></canvas>
+    </div>
+
+    <div class="sliders">
+      <div class="slider-row">
+        <span class="sl-label">Volume</span>
+        <input type="range" id="sl-vol" min="1" max="100" value="15" oninput="sharedSetVol(+this.value)">
+        <span class="sl-val" id="vol-val">15%</span>
+      </div>
+      <div class="slider-row">
+        <span class="sl-label">Noise Mix</span>
+        <input type="range" id="sl-mix"  min="0" max="100" value="50" oninput="pickerSetMix(+this.value)">
+        <span class="sl-val" id="mix-val">50%</span>
+      </div>
+      <div class="slider-row">
+        <span class="sl-label">Band Width</span>
+        <input type="range" id="sl-band" min="2" max="100" value="30" oninput="pickerSetBand(+this.value)">
+        <span class="sl-val" id="band-val">30%</span>
+      </div>
+    </div>
+
+    <div class="hints">
+      <kbd>2</kbd>–<kbd>6</kbd> select &nbsp;·&nbsp;
+      <kbd>Space</kbd> play/stop &nbsp;·&nbsp;
+      <kbd>↑</kbd><kbd>↓</kbd> noise &nbsp;·&nbsp;
+      <kbd>←</kbd><kbd>→</kbd> band
+    </div>
+
+    <p style="margin-top:2.5rem; font-family:'IBM Plex Mono',monospace; font-size:.75rem; line-height:1.7; color:var(--dim);">
+      Set your 5 reference tones above using the <strong style="color:var(--text); font-weight:400;">edit</strong> labels.
+      The Tone Matcher will use the lowest and highest of these frequencies as its search range.
+      Adjust noise mix and band width to better match the character of your tinnitus before switching tabs.
+    </p>
+  </div>
+
+  <!-- ═══ TINNITUS FINDER ═══ -->
+  <div id="panel-finder" class="panel">
+
+    <!-- start -->
+    <div id="fs-start" class="fstate active">
+      <div class="start-wrap">
+        <div class="start-title">Adaptive Staircase Protocol</div>
+        <p class="start-desc">
+          Press <strong>Space</strong> to play a tone.<br>
+          Tell us if your tinnitus sounds <strong>higher</strong> or <strong>lower</strong>.<br>
+          The step size shrinks each time you reverse direction.<br>
+          Press <strong>=</strong> when you find a match.
+        </p>
+        <button class="cta" onclick="finderStart()">Begin</button>
+      </div>
+      <p style="margin-top:1.5rem; font-family:'IBM Plex Mono',monospace; font-size:.75rem; line-height:1.7; color:var(--dim); text-align:center;">
+        Search range is set by your Tone Picker frequencies.<br>
+        Adjust those first to bracket where you think your tinnitus falls.
+      </p>
+    </div>
+
+    <!-- staircase -->
+    <div id="fs-sc" class="fstate">
+      <div class="sc-stats">
+        <div class="stat"><div class="stat-n" id="sc-round">1</div><div class="stat-l">Round</div></div>
+        <div class="stat"><div class="stat-n" id="sc-rev">0</div><div class="stat-l">Reversals</div></div>
+        <div class="stat"><div class="stat-n" id="sc-step">—</div><div class="stat-l">Step Hz</div></div>
+      </div>
+
+      <div class="tone-ring" id="sc-ring" onclick="scTogglePlay()">
+        <span id="sc-ring-lbl">space</span>
+      </div>
+
+      <div class="sc-btns">
+        <button class="sc-btn" onclick="scAnswer('l')"><span class="bk">L</span>My Tone Is Lower</button>
+        <button class="sc-btn" onclick="scAnswer('m')"><span class="bk">=</span>This Is My Tone</button>
+        <button class="sc-btn" onclick="scAnswer('h')"><span class="bk">H</span>My Tone Is Higher</button>
+      </div>
+
+      <div class="finder-sliders sliders">
+        <div class="slider-row">
+          <span class="sl-label">Volume</span>
+          <input type="range" id="fsl-vol" min="1" max="100" value="15" oninput="sharedSetVol(+this.value)">
+          <span class="sl-val" id="fvol-val">15%</span>
+        </div>
+        <div class="slider-row">
+          <span class="sl-label">Noise Mix</span>
+          <input type="range" id="fsl-mix"  min="0" max="100" value="50" oninput="sharedSetMix(+this.value)">
+          <span class="sl-val" id="fmix-val">50%</span>
+        </div>
+        <div class="slider-row">
+          <span class="sl-label">Band Width</span>
+          <input type="range" id="fsl-band" min="2" max="100" value="30" oninput="sharedSetBand(+this.value)">
+          <span class="sl-val" id="fband-val">30%</span>
+        </div>
+      </div>
+
+      <div class="hints">
+        <kbd>Space</kbd> play/stop &nbsp;·&nbsp;
+        <kbd>H</kbd> higher &nbsp;·&nbsp;
+        <kbd>L</kbd> lower &nbsp;·&nbsp;
+        <kbd>=</kbd> match
+      </div>
+    </div>
+
+    <!-- octave -->
+    <div id="fs-oct" class="fstate">
+      <div class="oct-intro">
+        <h3>Octave Confusion Test</h3>
+        <p>Tinnitus is often perceived an octave off.<br>Play A, B, and C — choose the closest match.</p>
+      </div>
+
+      <div class="oct-grid">
+        <button class="oct-btn" id="ob-a" onclick="octPlay('a')"><span class="ok">A</span>half</button>
+        <button class="oct-btn" id="ob-b" onclick="octPlay('b')"><span class="ok">B</span>estimate</button>
+        <button class="oct-btn" id="ob-c" onclick="octPlay('c')"><span class="ok">C</span>double</button>
+      </div>
+
+      <div class="oct-pick">
+        <button class="oct-pick-btn" onclick="octSelect('a')"><kbd>1</kbd> A matches</button>
+        <button class="oct-pick-btn" onclick="octSelect('b')"><kbd>2</kbd> B matches</button>
+        <button class="oct-pick-btn" onclick="octSelect('c')"><kbd>3</kbd> C matches</button>
+      </div>
+
+      <div class="hints" style="margin-top:1.5rem">
+        <kbd>A</kbd><kbd>B</kbd><kbd>C</kbd> play &nbsp;·&nbsp;
+        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> select
+      </div>
+    </div>
+
+    <!-- result -->
+    <div id="fs-result" class="fstate">
+      <div class="result-wrap">
+        <div class="result-lbl">Estimated Tinnitus Frequency</div>
+        <div class="result-freq" id="res-freq">—</div>
+        <div class="result-note" id="res-note"></div>
+        <div class="result-actions">
+          <button class="act-btn primary" id="res-play-btn" onclick="resTogglePlay()">Play Tone</button>
+          <button class="act-btn" onclick="finderReset()">Start Over</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  AUDIO ENGINE
+// ═══════════════════════════════
+let ctx = null;
+function getCtx() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+function elGain(f) {
+  const pts = [[250,76],[500,70],[1000,70],[2000,69],[4000,65],[6000,72],[8000,77],[12000,85]];
+  const lf = Math.log10(Math.max(250, Math.min(12000, f)));
+  let db = pts[0][1];
+  for (let i = 1; i < pts.length; i++) {
+    if (lf <= Math.log10(pts[i][0])) {
+      const t = (lf - Math.log10(pts[i-1][0])) / (Math.log10(pts[i][0]) - Math.log10(pts[i-1][0]));
+      db = pts[i-1][1] + t * (pts[i][1] - pts[i-1][1]);
+      break;
+    }
+    db = pts[i][1];
+  }
+  return Math.pow(10, (db - 70) / 20);
+}
+
+let nodes = null;
+let analyser = null;
+
+function startTone(freq, mix, band) {
+  stopTone();
+  const c = getCtx();
+
+  analyser = c.createAnalyser();
+  analyser.fftSize = 512;
+
+  const master = c.createGain();
+  master.gain.value = elGain(freq) * masterVol;
+  master.connect(analyser);
+  analyser.connect(c.destination);
+
+  // Sine
+  const osc = c.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  const oscG = c.createGain();
+  oscG.gain.value = 1 - mix;
+  osc.connect(oscG); oscG.connect(master);
+  osc.start();
+
+  // Noise
+  const sr = c.sampleRate;
+  const buf = c.createBuffer(1, sr * 2, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const nSrc = c.createBufferSource();
+  nSrc.buffer = buf; nSrc.loop = true;
+
+  const bw = freq * (band / 100);
+  const filt = c.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.frequency.value = freq;
+  filt.Q.value = freq / Math.max(bw * 2, 1);
+
+  const noiseG = c.createGain();
+  noiseG.gain.value = mix;
+  nSrc.connect(filt); filt.connect(noiseG); noiseG.connect(master);
+  nSrc.start();
+
+  nodes = { osc, nSrc, oscG, noiseG, filt, master };
+}
+
+function stopTone() {
+  if (!nodes) return;
+  try { nodes.osc.stop(); nodes.nSrc.stop(); } catch(e) {}
+  nodes = null; analyser = null;
+}
+
+function updateTone(freq, mix, band) {
+  if (!nodes) return;
+  nodes.oscG.gain.value = 1 - mix;
+  nodes.noiseG.gain.value = mix;
+  nodes.filt.frequency.value = freq;
+  nodes.filt.Q.value = freq / Math.max(freq * (band / 100) * 2, 1);
+  nodes.master.gain.value = elGain(freq) * masterVol;
+  if (nodes.osc) nodes.osc.frequency.value = freq;
+}
+
+// ═══════════════════════════════
+//  WAVEFORM
+// ═══════════════════════════════
+const wfc = document.getElementById('wfcanvas');
+const wfx = wfc.getContext('2d');
+let raf = null;
+
+function drawWf() {
+  raf = requestAnimationFrame(drawWf);
+  const W = wfc.width  = wfc.offsetWidth;
+  const H = wfc.height = wfc.offsetHeight;
+  wfx.clearRect(0, 0, W, H);
+  if (!analyser) {
+    wfx.strokeStyle = 'rgba(26,38,46,.8)';
+    wfx.lineWidth = 1;
+    wfx.beginPath(); wfx.moveTo(0, H/2); wfx.lineTo(W, H/2); wfx.stroke();
+    return;
+  }
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteTimeDomainData(data);
+  wfx.strokeStyle = 'rgba(0,200,168,.55)';
+  wfx.lineWidth = 1.5;
+  wfx.beginPath();
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / data.length) * W;
+    const y = ((data[i] / 128) - 1) * (H / 2) + H / 2;
+    i === 0 ? wfx.moveTo(x, y) : wfx.lineTo(x, y);
+  }
+  wfx.stroke();
+}
+drawWf();
+
+// ═══════════════════════════════
+//  TONE PICKER
+// ═══════════════════════════════
+let masterVol = 0.15;
+const PFREQS = [2000, 3000, 4000, 5000, 6000];
+
+function fmtFreq(f) {
+  return f >= 1000 ? (f % 1000 === 0 ? (f/1000) + 'k' : (f/1000).toFixed(1) + 'k') : f + '';
+}
+
+function startEdit(e, i) {
+  e.stopPropagation();
+  const inp = document.getElementById('fbi' + i);
+  inp.value = PFREQS[i];
+  inp.style.display = 'block';
+  inp.focus(); inp.select();
+}
+
+function commitEdit(i) {
+  const inp = document.getElementById('fbi' + i);
+  const v = parseInt(inp.value);
+  if (!isNaN(v) && v >= 100 && v <= 16000) {
+    PFREQS[i] = v;
+    document.getElementById('fbl' + i).textContent = fmtFreq(v);
+    if (pIdx === i && pPlaying) startTone(v, pMix, pBand);
+  }
+  inp.style.display = 'none';
+}
+
+function editKey(e, i) {
+  if (e.key === 'Enter') { e.preventDefault(); commitEdit(i); }
+  if (e.key === 'Escape') { document.getElementById('fbi' + i).style.display = 'none'; }
+  e.stopPropagation();
+}
+let pIdx = 0, pPlaying = false, pMix = 0.5, pBand = 30;
+
+function pickerSelect(i) {
+  pIdx = i;
+  document.querySelectorAll('.freq-btn').forEach((b, j) => {
+    b.classList.toggle('sel', j === i);
+    b.classList.toggle('on',  j === i && pPlaying);
+    if (j !== i) b.classList.remove('on');
+  });
+  if (pPlaying) startTone(PFREQS[i], pMix, pBand);
+}
+
+function pickerTogglePlay() {
+  pPlaying = !pPlaying;
+  const btn = document.getElementById('picker-play-btn');
+  const st  = document.getElementById('picker-status');
+  if (pPlaying) {
+    startTone(PFREQS[pIdx], pMix, pBand);
+    btn.textContent = '[ Space ]  Stop'; btn.classList.add('on');
+    st.textContent = 'playing'; st.classList.add('on');
+    document.getElementById('fb' + pIdx).classList.add('on');
+  } else {
+    stopTone();
+    btn.textContent = '[ Space ]  Play'; btn.classList.remove('on');
+    st.textContent = 'stopped'; st.classList.remove('on');
+    document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('on'));
+  }
+}
+
+function pickerSetMix(v) {
+  sharedSetMix(v);
+  if (pPlaying) updateTone(PFREQS[pIdx], pMix, pBand);
+}
+
+function pickerSetBand(v) {
+  sharedSetBand(v);
+  if (pPlaying) updateTone(PFREQS[pIdx], pMix, pBand);
+}
+
+function sharedSetVol(v) {
+  masterVol = v / 100;
+  document.getElementById('vol-val').textContent  = v + '%';
+  document.getElementById('fvol-val').textContent = v + '%';
+  document.getElementById('sl-vol').value         = v;
+  document.getElementById('fsl-vol').value        = v;
+  if (nodes) nodes.master.gain.value = elGain(nodes.osc ? nodes.osc.frequency.value : 1000) * masterVol;
+}
+
+function sharedSetMix(v) {
+  pMix = v / 100;
+  document.getElementById('mix-val').textContent    = v + '%';
+  document.getElementById('fmix-val').textContent   = v + '%';
+  document.getElementById('sl-mix').value           = v;
+  document.getElementById('fsl-mix').value          = v;
+  if (scPlaying) startTone(scFreq, pMix, pBand);
+}
+
+function sharedSetBand(v) {
+  pBand = v;
+  document.getElementById('band-val').textContent   = v + '%';
+  document.getElementById('fband-val').textContent  = v + '%';
+  document.getElementById('sl-band').value          = v;
+  document.getElementById('fsl-band').value         = v;
+  if (scPlaying) startTone(scFreq, pMix, pBand);
+}
+
+// ═══════════════════════════════
+//  FINDER — STAIRCASE
+// ═══════════════════════════════
+let scFreq, scStep, scDir, scRevs, scRound, scPlaying;
+const SC_MIN = 50;
+
+function finderStart() {
+  const scMin = Math.min(...PFREQS);
+  const scMax = Math.max(...PFREQS);
+  scFreq    = scMin + Math.random() * (scMax - scMin);
+  scStep    = (scMax - scMin) / 4;
+  scDir     = null;
+  scRevs    = 0;
+  scRound   = 1;
+  scPlaying = false;
+  showFS('sc');
+  scUpdateUI();
+}
+
+function scUpdateUI() {
+  document.getElementById('sc-round').textContent = scRound;
+  document.getElementById('sc-rev').textContent   = scRevs;
+  document.getElementById('sc-step').textContent  = Math.round(scStep);
+}
+
+function scTogglePlay() {
+  scPlaying = !scPlaying;
+  const ring = document.getElementById('sc-ring');
+  const lbl  = document.getElementById('sc-ring-lbl');
+  if (scPlaying) {
+    startTone(scFreq, pMix, pBand);
+    ring.classList.add('on'); lbl.textContent = '■';
+  } else {
+    stopTone();
+    ring.classList.remove('on'); lbl.textContent = 'space';
+  }
+}
+
+function scAnswer(dir) {
+  if (dir === 'm') {
+    stopTone(); scPlaying = false;
+    octStart(scFreq);
+    return;
+  }
+  if (scDir !== null && dir !== scDir) {
+    scRevs++;
+    scStep = Math.max(SC_MIN, scStep * 0.5);
+  }
+  scDir   = dir;
+  scFreq += dir === 'h' ? scStep : -scStep;
+  scFreq  = Math.max(500, Math.min(12000, scFreq));
+  scRound++;
+  if (scPlaying) startTone(scFreq, pMix, pBand);
+  scUpdateUI();
+}
+
+// ═══════════════════════════════
+//  FINDER — OCTAVE
+// ═══════════════════════════════
+let octFreqs = {}, octActive = null;
+
+function octStart(f) {
+  octFreqs  = { a: f / 2, b: f, c: f * 2 };
+  octActive = null;
+  ['a','b','c'].forEach(k => document.getElementById('ob-' + k).classList.remove('on'));
+  showFS('oct');
+}
+
+function octPlay(k) {
+  ['a','b','c'].forEach(j => document.getElementById('ob-' + j).classList.remove('on'));
+  if (octActive === k) {
+    stopTone(); octActive = null;
+    return;
+  }
+  stopTone();
+  startTone(octFreqs[k], pMix, pBand);
+  octActive = k;
+  document.getElementById('ob-' + k).classList.add('on');
+}
+
+function octSelect(k) {
+  stopTone(); octActive = null;
+  const labels = { a: 'half of estimate', b: 'estimated frequency', c: 'double estimate' };
+  showResult(octFreqs[k], labels[k]);
+}
+
+// ═══════════════════════════════
+//  FINDER — RESULT
+// ═══════════════════════════════
+let resFreq = 0, resPlaying = false;
+
+function showResult(f, note) {
+  resFreq = f; resPlaying = false;
+  document.getElementById('res-freq').textContent = Math.round(f) + ' Hz';
+  document.getElementById('res-note').textContent = note;
+  document.getElementById('res-play-btn').textContent = 'Play Tone';
+  document.getElementById('res-play-btn').classList.add('primary');
+  showFS('result');
+}
+
+function resTogglePlay() {
+  resPlaying = !resPlaying;
+  const btn = document.getElementById('res-play-btn');
+  if (resPlaying) { startTone(resFreq, pMix, pBand); btn.textContent = 'Stop'; }
+  else            { stopTone();                   btn.textContent = 'Play Tone'; }
+}
+
+function finderReset() {
+  stopTone(); resPlaying = false; scPlaying = false;
+  showFS('start');
+}
+
+// ═══════════════════════════════
+//  STATE / TAB HELPERS
+// ═══════════════════════════════
+let activeTab = 'picker';
+
+function showFS(state) {
+  ['start','sc','oct','result'].forEach(s =>
+    document.getElementById('fs-' + s).classList.toggle('active', s === state)
+  );
+}
+
+function switchTab(tab) {
+  stopTone();
+  pPlaying = false; scPlaying = false; resPlaying = false;
+  // reset picker UI
+  document.getElementById('picker-play-btn').textContent = '[ Space ]  Play';
+  document.getElementById('picker-play-btn').classList.remove('on');
+  document.getElementById('picker-status').textContent = 'stopped';
+  document.getElementById('picker-status').classList.remove('on');
+  document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('on'));
+  // reset sc ring
+  document.getElementById('sc-ring').classList.remove('on');
+  document.getElementById('sc-ring-lbl').textContent = 'space';
+
+  activeTab = tab;
+  document.getElementById('tab-picker').classList.toggle('active', tab === 'picker');
+  document.getElementById('tab-finder').classList.toggle('active', tab === 'finder');
+  document.getElementById('panel-picker').classList.toggle('active', tab === 'picker');
+  document.getElementById('panel-finder').classList.toggle('active', tab === 'finder');
+}
+
+// ═══════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+
+  if (e.key === ' ') { e.preventDefault(); activeTab === 'picker' ? pickerTogglePlay() : scTogglePlay(); return; }
+
+  if (activeTab === 'picker') {
+    switch (e.key) {
+      case '2': pickerSelect(0); break;
+      case '3': pickerSelect(1); break;
+      case '4': pickerSelect(2); break;
+      case '5': pickerSelect(3); break;
+      case '6': pickerSelect(4); break;
+      case 'p': case 'P': pickerTogglePlay(); break;
+      case 'ArrowUp':
+        e.preventDefault();
+        pMix = Math.min(1, Math.round((pMix + .1) * 10) / 10);
+        document.getElementById('sl-mix').value = pMix * 100;
+        pickerSetMix(pMix * 100);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        pMix = Math.max(0, Math.round((pMix - .1) * 10) / 10);
+        document.getElementById('sl-mix').value = pMix * 100;
+        pickerSetMix(pMix * 100);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        pBand = Math.min(100, pBand + 5);
+        document.getElementById('sl-band').value = pBand;
+        pickerSetBand(pBand);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        pBand = Math.max(2, pBand - 5);
+        document.getElementById('sl-band').value = pBand;
+        pickerSetBand(pBand);
+        break;
+    }
+  } else {
+    const fs = document.querySelector('#panel-finder .fstate.active').id;
+    if (fs === 'fs-sc') {
+      switch (e.key) {
+        case 'p': case 'P': scTogglePlay(); break;
+        case 'h': case 'H': scAnswer('h'); break;
+        case 'l': case 'L': scAnswer('l'); break;
+        case '=': scAnswer('m'); break;
+      }
+    } else if (fs === 'fs-oct') {
+      switch (e.key) {
+        case 'a': case 'A': octPlay('a'); break;
+        case 'b': case 'B': octPlay('b'); break;
+        case 'c': case 'C': octPlay('c'); break;
+        case '1': octSelect('a'); break;
+        case '2': octSelect('b'); break;
+        case '3': octSelect('c'); break;
+      }
+    } else if (fs === 'fs-result') {
+      if (e.key === 'p' || e.key === 'P') resTogglePlay();
+    }
+  }
+});
+</script>
+</body>
+</html>
