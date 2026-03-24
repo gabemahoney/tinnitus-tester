@@ -119,28 +119,31 @@ header {
   color: var(--dim);
   opacity: .5;
 }
-.freq-btn .edit-icon {
-  position: absolute;
-  bottom: .4rem; left: 0; right: 0;
-  font-size: .65rem;
-  color: var(--dim);
-  opacity: .5;
-  transition: opacity .15s, color .15s;
-  cursor: pointer;
-  text-align: center;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  font-family: 'IBM Plex Mono', monospace;
-}
-.freq-btn:hover .edit-icon { opacity: .9; color: var(--text); }
-.freq-btn .edit-icon:hover { opacity: 1 !important; color: var(--accent); }
 .freq-btn:hover { border-color: var(--border2); color: var(--text); }
 .freq-btn.sel { border-color: var(--border2); color: var(--text); background: var(--bg3); }
 .freq-btn.on { border-color: var(--accent); color: var(--accent); background: var(--bg3); box-shadow: 0 0 20px rgba(0,200,168,.12); }
 
+.freq-edit-row {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin-top: -.8rem;
+  margin-bottom: 1.8rem;
+}
+.edit-freq-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .35rem .8rem;
+  cursor: pointer;
+  transition: all .12s;
+}
+.edit-freq-btn:hover { border-color: var(--accent); color: var(--accent); }
 .freq-edit-input {
-  position: absolute;
-  inset: 0;
   background: var(--bg3);
   border: 1px solid var(--accent);
   color: var(--accent);
@@ -148,8 +151,15 @@ header {
   font-size: 1rem;
   text-align: center;
   outline: none;
-  width: 100%;
-  padding: 0;
+  padding: .3rem .5rem;
+  width: 7rem;
+  display: none;
+}
+.freq-edit-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .7rem;
+  color: var(--dim);
+  letter-spacing: .05em;
   display: none;
 }
 
@@ -542,11 +552,17 @@ kbd {
   <div id="panel-picker" class="panel active">
 
     <div class="freq-grid">
-      <button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">2</span><span id="fbl0">2k</span><span class="edit-icon" onclick="startEdit(event,0)">edit</span><input class="freq-edit-input" id="fbi0" type="number" min="100" max="16000" onblur="commitEdit(0)" onkeydown="editKey(event,0)"></button>
-      <button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">3</span><span id="fbl1">3k</span><span class="edit-icon" onclick="startEdit(event,1)">edit</span><input class="freq-edit-input" id="fbi1" type="number" min="100" max="16000" onblur="commitEdit(1)" onkeydown="editKey(event,1)"></button>
-      <button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">4</span><span id="fbl2">4k</span><span class="edit-icon" onclick="startEdit(event,2)">edit</span><input class="freq-edit-input" id="fbi2" type="number" min="100" max="16000" onblur="commitEdit(2)" onkeydown="editKey(event,2)"></button>
-      <button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">5</span><span id="fbl3">5k</span><span class="edit-icon" onclick="startEdit(event,3)">edit</span><input class="freq-edit-input" id="fbi3" type="number" min="100" max="16000" onblur="commitEdit(3)" onkeydown="editKey(event,3)"></button>
-      <button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">6</span><span id="fbl4">6k</span><span class="edit-icon" onclick="startEdit(event,4)">edit</span><input class="freq-edit-input" id="fbi4" type="number" min="100" max="16000" onblur="commitEdit(4)" onkeydown="editKey(event,4)"></button>
+      <button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">2</span><span id="fbl0">2k</span></button>
+      <button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">3</span><span id="fbl1">3k</span></button>
+      <button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">4</span><span id="fbl2">4k</span></button>
+      <button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">5</span><span id="fbl3">5k</span></button>
+      <button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">6</span><span id="fbl4">6k</span></button>
+    </div>
+
+    <div class="freq-edit-row">
+      <button class="edit-freq-btn" id="edit-freq-btn" onclick="startEdit()">Edit Selected</button>
+      <span class="freq-edit-label" id="freq-edit-label">Editing slot <span id="freq-edit-slot"></span>:</span>
+      <input class="freq-edit-input" id="freq-edit-input" type="number" min="100" max="16000" onblur="commitEdit()" onkeydown="editKey(event)">
     </div>
 
     <div class="play-row">
@@ -584,7 +600,7 @@ kbd {
     </div>
 
     <p style="margin-top:2.5rem; font-family:'IBM Plex Mono',monospace; font-size:.75rem; line-height:1.7; color:var(--dim);">
-      Set your 5 reference tones above using the <strong style="color:var(--text); font-weight:400;">edit</strong> labels.
+      Set your 5 reference tones above using the <strong style="color:var(--text); font-weight:400;">Edit Selected</strong> button.
       The Tone Matcher will use the lowest and highest of these frequencies as its search range.
       Adjust noise mix and band width to better match the character of your tinnitus — these settings are shared across both tabs.
     </p>
@@ -866,28 +882,38 @@ function fmtFreq(f) {
   return f >= 1000 ? (f % 1000 === 0 ? (f/1000) + 'k' : (f/1000).toFixed(1) + 'k') : f + '';
 }
 
-function startEdit(e, i) {
-  e.stopPropagation();
-  const inp = document.getElementById('fbi' + i);
-  inp.value = PFREQS[i];
+function startEdit() {
+  const inp = document.getElementById('freq-edit-input');
+  const lbl = document.getElementById('freq-edit-label');
+  const slot = document.getElementById('freq-edit-slot');
+  slot.textContent = pIdx + 1;
+  inp.value = PFREQS[pIdx];
   inp.style.display = 'block';
+  lbl.style.display = 'inline';
+  document.getElementById('edit-freq-btn').style.display = 'none';
   inp.focus(); inp.select();
 }
 
-function commitEdit(i) {
-  const inp = document.getElementById('fbi' + i);
+function commitEdit() {
+  const inp = document.getElementById('freq-edit-input');
   const v = parseInt(inp.value);
   if (!isNaN(v) && v >= 100 && v <= 16000) {
-    PFREQS[i] = v;
-    document.getElementById('fbl' + i).textContent = fmtFreq(v);
-    if (pIdx === i && pPlaying) startTone(v, pMix, pBand);
+    PFREQS[pIdx] = v;
+    document.getElementById('fbl' + pIdx).textContent = fmtFreq(v);
+    if (pPlaying) startTone(v, pMix, pBand);
   }
   inp.style.display = 'none';
+  document.getElementById('freq-edit-label').style.display = 'none';
+  document.getElementById('edit-freq-btn').style.display = '';
 }
 
-function editKey(e, i) {
-  if (e.key === 'Enter') { e.preventDefault(); commitEdit(i); }
-  if (e.key === 'Escape') { document.getElementById('fbi' + i).style.display = 'none'; }
+function editKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
+  if (e.key === 'Escape') {
+    document.getElementById('freq-edit-input').style.display = 'none';
+    document.getElementById('freq-edit-label').style.display = 'none';
+    document.getElementById('edit-freq-btn').style.display = '';
+  }
   e.stopPropagation();
 }
 let pIdx = 0, pPlaying = false, pMix = 0.5, pBand = 30;
