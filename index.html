@@ -1077,22 +1077,8 @@ function finderReset() {
 // ═══════════════════════════════
 //  MULTI-TONAL
 // ═══════════════════════════════
-// Fixed array: sub-1k region + exact 1k increments with intermediates
-const mtFreqs = [
-  500, 625, 750, 875,
-  1000, 1250, 1500, 1750,
-  2000, 2500,
-  3000, 3500,
-  4000, 4500,
-  5000, 5500,
-  6000, 6500,
-  7000, 7500,
-  8000, 8500,
-  9000, 9500,
-  10000, 10500,
-  11000, 11500,
-  12000
-];
+// 250Hz steps from 500 to 12000
+const mtFreqs = Array.from({length: Math.floor((12000 - 500) / 250) + 1}, (_, i) => 500 + i * 250);
 const MT_COUNT = mtFreqs.length;
 
 const mtSelected = new Set();
