@@ -594,8 +594,8 @@ kbd {
 
     <p style="margin-top:2.5rem; font-family:'IBM Plex Mono',monospace; font-size:.75rem; line-height:1.7; color:var(--dim);">
       Set your 5 reference tones above using the <strong style="color:var(--text); font-weight:400;">edit</strong> buttons below each square.
-      The Tone Matcher will use the lowest and highest of these frequencies as its search range.
-      Adjust noise mix and band width to better match the character of your tinnitus — these settings are shared across both tabs.
+      The Tone Matcher and Multi-Tonal keyboard both use the lowest and highest of these frequencies as their range — adjust them first to bracket where you think your tinnitus falls.
+      Adjust noise mix and band width to better match the character of your tinnitus — these settings are shared across all tabs.
     </p>
   </div>
 
@@ -738,6 +738,7 @@ kbd {
     </div>
 
     <p style="margin-top:2.5rem; font-family:'IBM Plex Mono',monospace; font-size:.75rem; line-height:1.7; color:var(--dim);">
+      The keyboard range is set by your Tone Picker frequencies — edit those first to bracket where your tinnitus falls.
       Select multiple frequencies to play simultaneously. Selecting a contiguous range plays all those tones at once, which can approximate the character of broadband tinnitus.
     </p>
 
@@ -889,6 +890,7 @@ function commitEdit(i) {
     PFREQS[i] = v;
     document.getElementById('fbl' + i).textContent = fmtFreq(v);
     if (pIdx === i && pPlaying) startTone(v, pMix, pBand);
+    mtRebuild();
   }
   inp.style.display = 'none';
 }
@@ -1084,9 +1086,14 @@ function finderReset() {
 // ═══════════════════════════════
 //  MULTI-TONAL
 // ═══════════════════════════════
-// 250Hz steps from 500 to 12000
-const mtFreqs = Array.from({length: Math.floor((12000 - 500) / 250) + 1}, (_, i) => 500 + i * 250);
-const MT_COUNT = mtFreqs.length;
+// 250Hz steps spanning Tone Picker range
+let mtFreqs = [];
+
+function mtGenFreqs() {
+  const lo = Math.min(...PFREQS);
+  const hi = Math.max(...PFREQS);
+  mtFreqs = Array.from({length: Math.floor((hi - lo) / 250) + 1}, (_, i) => lo + i * 250);
+}
 
 const mtSelected = new Set();
 const mtNodes = new Map();
@@ -1099,9 +1106,10 @@ function mtFmtFreq(f) {
 
 function mtBuildKeyboard() {
   const kb = document.getElementById('mt-keyboard');
+  kb.innerHTML = '';
   mtFreqs.forEach((f, i) => {
     // height scaled logarithmically for visual interest
-    const h = 40 + 50 * (i / (MT_COUNT - 1));
+    const h = 40 + 50 * (i / Math.max(mtFreqs.length - 1, 1));
     const key = document.createElement('div');
     key.className = 'mt-key';
     key.style.height = h + 'px';
@@ -1234,6 +1242,24 @@ function mtSyncSliders() {
   document.getElementById('mtmix-val').textContent = Math.round(pMix * 100) + '%';
 }
 
+function mtRebuild() {
+  if (mtPlaying) {
+    mtNodes.forEach((_, i) => mtStopTone(i));
+    mtNodes.clear();
+    mtPlaying = false;
+    const btn = document.getElementById('mt-play-btn');
+    const st  = document.getElementById('mt-status');
+    if (btn) { btn.textContent = '[ Space ]  Play'; btn.classList.remove('on'); }
+    if (st)  { st.textContent = 'stopped'; st.classList.remove('on'); }
+  }
+  mtSelected.clear();
+  mtLastClicked = null;
+  mtGenFreqs();
+  mtBuildKeyboard();
+  mtUpdateAll();
+}
+
+mtGenFreqs();
 mtBuildKeyboard();
 
 // ═══════════════════════════════
