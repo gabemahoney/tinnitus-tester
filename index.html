@@ -475,6 +475,52 @@ kbd {
 .act-btn:hover { border-color: var(--accent); color: var(--accent); }
 .act-btn.primary { border-color: var(--accent); color: var(--accent); }
 .act-btn.primary:hover { background: rgba(0,200,168,.07); }
+
+/* ---- MULTI-TONAL ---- */
+.mt-keyboard {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 90px;
+  margin-bottom: 1rem;
+  user-select: none;
+}
+.mt-key {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .08s, border-color .08s;
+  position: relative;
+  min-height: 40px;
+}
+.mt-key:hover { border-color: var(--border2); background: var(--bg3); }
+.mt-key.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(0,200,168,.3);
+}
+.mt-key .mt-key-label {
+  position: absolute;
+  bottom: -1.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.mt-keyboard-wrap {
+  padding-bottom: 1.8rem;
+  margin-bottom: .5rem;
+}
+.mt-info {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  color: var(--dim);
+  margin-top: 2rem;
+  min-height: 1.2rem;
+}
 </style>
 </head>
 <body>
@@ -486,7 +532,8 @@ kbd {
 
 <div class="tabs">
   <button class="tab active" id="tab-picker" onclick="switchTab('picker')">Tone Picker</button>
-  <button class="tab"         id="tab-finder" onclick="switchTab('finder')">Tone Matcher</button>
+  <button class="tab"        id="tab-finder" onclick="switchTab('finder')">Tone Matcher</button>
+  <button class="tab"        id="tab-multi"  onclick="switchTab('multi')">Multi-Tonal</button>
 </div>
 
 <div class="content">
@@ -647,6 +694,41 @@ kbd {
     </div>
 
   </div>
+
+  <!-- ═══ MULTI-TONAL ═══ -->
+  <div id="panel-multi" class="panel">
+
+    <div class="mt-keyboard" id="mt-keyboard"></div>
+
+    <div class="mt-info">
+      <span id="mt-label">No tones selected</span>
+    </div>
+
+    <div class="sliders" style="margin-top:1.8rem">
+      <div class="slider-row">
+        <span class="sl-label">Volume</span>
+        <input type="range" id="mtsl-vol" min="1" max="100" value="15" oninput="sharedSetVol(+this.value)">
+        <span class="sl-val" id="mtvol-val">15%</span>
+      </div>
+      <div class="slider-row">
+        <span class="sl-label">Noise Mix</span>
+        <input type="range" id="mtsl-mix" min="0" max="100" value="50" oninput="sharedSetMix(+this.value)">
+        <span class="sl-val" id="mtmix-val">50%</span>
+      </div>
+    </div>
+
+    <div class="hints" style="margin-top:1.8rem">
+      <kbd>Click</kbd> toggle tone &nbsp;·&nbsp;
+      <kbd>Shift+Click</kbd> select range &nbsp;·&nbsp;
+      <kbd>Esc</kbd> clear all
+    </div>
+
+    <p style="margin-top:2.5rem; font-family:'IBM Plex Mono',monospace; font-size:.75rem; line-height:1.7; color:var(--dim);">
+      Select multiple frequencies to play simultaneously. Selecting a contiguous range creates a band of noise centered on those frequencies — equivalent to widening the band on a single tone.
+    </p>
+
+  </div>
+
 </div>
 
 <script>
@@ -844,20 +926,26 @@ function pickerSetBand(v) {
 
 function sharedSetVol(v) {
   masterVol = v / 100;
-  document.getElementById('vol-val').textContent  = v + '%';
-  document.getElementById('fvol-val').textContent = v + '%';
-  document.getElementById('sl-vol').value         = v;
-  document.getElementById('fsl-vol').value        = v;
+  document.getElementById('vol-val').textContent   = v + '%';
+  document.getElementById('fvol-val').textContent  = v + '%';
+  document.getElementById('mtvol-val').textContent = v + '%';
+  document.getElementById('sl-vol').value          = v;
+  document.getElementById('fsl-vol').value         = v;
+  document.getElementById('mtsl-vol').value        = v;
   if (nodes) nodes.master.gain.value = elGain(nodes.osc ? nodes.osc.frequency.value : 1000) * masterVol;
+  mtUpdateAll();
 }
 
 function sharedSetMix(v) {
   pMix = v / 100;
   document.getElementById('mix-val').textContent    = v + '%';
   document.getElementById('fmix-val').textContent   = v + '%';
+  document.getElementById('mtmix-val').textContent  = v + '%';
   document.getElementById('sl-mix').value           = v;
   document.getElementById('fsl-mix').value          = v;
+  document.getElementById('mtsl-mix').value         = v;
   if (scPlaying) startTone(scFreq, pMix, pBand);
+  mtUpdateAll();
 }
 
 function sharedSetBand(v) {
@@ -982,6 +1070,146 @@ function finderReset() {
 }
 
 // ═══════════════════════════════
+//  MULTI-TONAL
+// ═══════════════════════════════
+const MT_COUNT = 28;
+const MT_MIN = 500, MT_MAX = 12000;
+const mtFreqs = Array.from({length: MT_COUNT}, (_, i) =>
+  Math.round(MT_MIN * Math.pow(MT_MAX / MT_MIN, i / (MT_COUNT - 1)))
+);
+
+const mtSelected = new Set();
+const mtNodes = new Map(); // freq → {osc, nSrc, oscG, noiseG}
+let mtLastClicked = null;
+
+function mtFmtFreq(f) {
+  return f >= 1000 ? (f % 1000 === 0 ? (f/1000)+'k' : (f/1000).toFixed(1)+'k') : f+'';
+}
+
+function mtBuildKeyboard() {
+  const kb = document.getElementById('mt-keyboard');
+  mtFreqs.forEach((f, i) => {
+    // height scaled logarithmically for visual interest
+    const h = 40 + 50 * (i / (MT_COUNT - 1));
+    const key = document.createElement('div');
+    key.className = 'mt-key';
+    key.style.height = h + 'px';
+    key.dataset.i = i;
+    // only label every 4th key to avoid clutter
+    if (i % 4 === 0) {
+      const lbl = document.createElement('span');
+      lbl.className = 'mt-key-label';
+      lbl.textContent = mtFmtFreq(f);
+      key.appendChild(lbl);
+    }
+    key.addEventListener('mousedown', e => mtKeyDown(e, i));
+    kb.appendChild(key);
+  });
+}
+
+function mtKeyDown(e, i) {
+  if (e.shiftKey && mtLastClicked !== null) {
+    const lo = Math.min(mtLastClicked, i);
+    const hi = Math.max(mtLastClicked, i);
+    // if all in range are on, turn them off; otherwise turn all on
+    const allOn = Array.from({length: hi-lo+1}, (_, k) => lo+k).every(j => mtSelected.has(j));
+    for (let j = lo; j <= hi; j++) allOn ? mtDeselect(j) : mtSelect(j);
+  } else {
+    mtSelected.has(i) ? mtDeselect(i) : mtSelect(i);
+    mtLastClicked = i;
+  }
+  mtUpdateAll();
+}
+
+function mtSelect(i) {
+  mtSelected.add(i);
+  const key = document.querySelector(`.mt-key[data-i="${i}"]`);
+  if (key) key.classList.add('on');
+  mtStartTone(i);
+}
+
+function mtDeselect(i) {
+  mtSelected.delete(i);
+  const key = document.querySelector(`.mt-key[data-i="${i}"]`);
+  if (key) key.classList.remove('on');
+  mtStopTone(i);
+}
+
+function mtStartTone(i) {
+  if (mtNodes.has(i)) { mtStopTone(i); }
+  const c = getCtx();
+  const freq = mtFreqs[i];
+  const n = mtSelected.size || 1;
+
+  const master = c.createGain();
+  master.gain.value = elGain(freq) * masterVol / Math.sqrt(n);
+  master.connect(c.destination);
+
+  const osc = c.createOscillator();
+  osc.type = 'sine'; osc.frequency.value = freq;
+  const oscG = c.createGain(); oscG.gain.value = 1 - pMix;
+  osc.connect(oscG); oscG.connect(master); osc.start();
+
+  const sr = c.sampleRate;
+  const buf = c.createBuffer(1, sr * 2, sr);
+  const d = buf.getChannelData(0);
+  for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1;
+  const nSrc = c.createBufferSource();
+  nSrc.buffer = buf; nSrc.loop = true;
+
+  const bw = freq * 0.08; // narrow — range selection is the "width"
+  const filt = c.createBiquadFilter();
+  filt.type = 'bandpass'; filt.frequency.value = freq;
+  filt.Q.value = freq / Math.max(bw * 2, 1);
+  const noiseG = c.createGain(); noiseG.gain.value = pMix;
+  nSrc.connect(filt); filt.connect(noiseG); noiseG.connect(master);
+  nSrc.start();
+
+  mtNodes.set(i, { osc, nSrc, oscG, noiseG, master });
+}
+
+function mtStopTone(i) {
+  const n = mtNodes.get(i);
+  if (!n) return;
+  try { n.osc.stop(); n.nSrc.stop(); } catch(e) {}
+  mtNodes.delete(i);
+}
+
+function mtUpdateAll() {
+  // rebalance volumes
+  const n = mtSelected.size || 1;
+  mtNodes.forEach((nd, i) => {
+    nd.master.gain.value = elGain(mtFreqs[i]) * masterVol / Math.sqrt(n);
+    nd.oscG.gain.value = 1 - pMix;
+    nd.noiseG.gain.value = pMix;
+  });
+  // update label
+  const lbl = document.getElementById('mt-label');
+  if (mtSelected.size === 0) {
+    lbl.textContent = 'No tones selected';
+  } else {
+    const sorted = Array.from(mtSelected).sort((a,b)=>a-b);
+    const freqList = sorted.map(i => mtFmtFreq(mtFreqs[i]));
+    lbl.textContent = freqList.join('  ·  ');
+  }
+}
+
+function mtClearAll() {
+  [...mtSelected].forEach(i => mtDeselect(i));
+  mtLastClicked = null;
+  mtUpdateAll();
+}
+
+function mtSyncSliders() {
+  document.getElementById('mtsl-vol').value  = Math.round(masterVol * 100);
+  document.getElementById('mtvol-val').textContent = Math.round(masterVol * 100) + '%';
+  document.getElementById('mtsl-mix').value  = Math.round(pMix * 100);
+  document.getElementById('mtmix-val').textContent = Math.round(pMix * 100) + '%';
+}
+
+mtBuildKeyboard();
+
+// ═══════════════════════════════
 //  STATE / TAB HELPERS
 // ═══════════════════════════════
 let activeTab = 'picker';
@@ -994,6 +1222,7 @@ function showFS(state) {
 
 function switchTab(tab) {
   stopTone();
+  mtClearAll();
   pPlaying = false; scPlaying = false; resPlaying = false;
   // reset picker UI
   document.getElementById('picker-play-btn').textContent = '[ Space ]  Play';
@@ -1006,10 +1235,11 @@ function switchTab(tab) {
   document.getElementById('sc-ring-lbl').textContent = 'space';
 
   activeTab = tab;
-  document.getElementById('tab-picker').classList.toggle('active', tab === 'picker');
-  document.getElementById('tab-finder').classList.toggle('active', tab === 'finder');
-  document.getElementById('panel-picker').classList.toggle('active', tab === 'picker');
-  document.getElementById('panel-finder').classList.toggle('active', tab === 'finder');
+  ['picker','finder','multi'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'multi') mtSyncSliders();
 }
 
 // ═══════════════════════════════
@@ -1019,6 +1249,7 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
 
   if (e.key === ' ') { e.preventDefault(); activeTab === 'picker' ? pickerTogglePlay() : scTogglePlay(); return; }
+  if (e.key === 'Escape' && activeTab === 'multi') { mtClearAll(); return; }
 
   if (activeTab === 'picker') {
     switch (e.key) {
