@@ -144,28 +144,22 @@ header {
   width: 100%;
 }
 .edit-freq-btn:hover { border-color: var(--accent); color: var(--accent); }
-.freq-edit-row {
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-  margin-bottom: 1.2rem;
+.freq-col {
+  position: relative;
 }
 .freq-edit-input {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: calc(100% - 2rem - 2px); /* covers just the tone box */
   background: var(--bg3);
   border: 1px solid var(--accent);
   color: var(--accent);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 1rem;
+  font-size: 1.1rem;
   text-align: center;
   outline: none;
-  padding: .3rem .5rem;
-  width: 8rem;
-}
-.freq-edit-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .75rem;
-  color: var(--dim);
-  letter-spacing: .05em;
+  display: none;
+  z-index: 1;
 }
 
 /* ---- PLAY ROW ---- */
@@ -557,16 +551,11 @@ kbd {
   <div id="panel-picker" class="panel active">
 
     <div class="freq-grid">
-      <div class="freq-col"><button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">1</span><span id="fbl0">2k</span></button><button class="edit-freq-btn" onclick="startEdit(0)">edit</button></div>
-      <div class="freq-col"><button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">2</span><span id="fbl1">3k</span></button><button class="edit-freq-btn" onclick="startEdit(1)">edit</button></div>
-      <div class="freq-col"><button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">3</span><span id="fbl2">4k</span></button><button class="edit-freq-btn" onclick="startEdit(2)">edit</button></div>
-      <div class="freq-col"><button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">4</span><span id="fbl3">5k</span></button><button class="edit-freq-btn" onclick="startEdit(3)">edit</button></div>
-      <div class="freq-col"><button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">5</span><span id="fbl4">6k</span></button><button class="edit-freq-btn" onclick="startEdit(4)">edit</button></div>
-    </div>
-
-    <div class="freq-edit-row" id="freq-edit-row" style="display:none">
-      <input class="freq-edit-input" id="freq-edit-input" type="number" min="100" max="16000" onblur="commitEdit()" onkeydown="editKey(event)">
-      <span class="freq-edit-label" id="freq-edit-label"></span>
+      <div class="freq-col"><button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">1</span><span id="fbl0">2k</span></button><input class="freq-edit-input" id="fbi0" type="number" min="100" max="16000" onblur="commitEdit(0)" onkeydown="editKey(event,0)"><button class="edit-freq-btn" onclick="startEdit(0)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">2</span><span id="fbl1">3k</span></button><input class="freq-edit-input" id="fbi1" type="number" min="100" max="16000" onblur="commitEdit(1)" onkeydown="editKey(event,1)"><button class="edit-freq-btn" onclick="startEdit(1)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">3</span><span id="fbl2">4k</span></button><input class="freq-edit-input" id="fbi2" type="number" min="100" max="16000" onblur="commitEdit(2)" onkeydown="editKey(event,2)"><button class="edit-freq-btn" onclick="startEdit(2)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">4</span><span id="fbl3">5k</span></button><input class="freq-edit-input" id="fbi3" type="number" min="100" max="16000" onblur="commitEdit(3)" onkeydown="editKey(event,3)"><button class="edit-freq-btn" onclick="startEdit(3)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">5</span><span id="fbl4">6k</span></button><input class="freq-edit-input" id="fbi4" type="number" min="100" max="16000" onblur="commitEdit(4)" onkeydown="editKey(event,4)"><button class="edit-freq-btn" onclick="startEdit(4)">edit</button></div>
     </div>
 
     <div class="play-row">
@@ -885,32 +874,27 @@ function fmtFreq(f) {
   return f >= 1000 ? (f % 1000 === 0 ? (f/1000) + 'k' : (f/1000).toFixed(1) + 'k') : f + '';
 }
 
-let editIdx = 0;
 function startEdit(i) {
-  editIdx = i;
-  const row = document.getElementById('freq-edit-row');
-  const inp = document.getElementById('freq-edit-input');
-  const lbl = document.getElementById('freq-edit-label');
+  const inp = document.getElementById('fbi' + i);
   inp.value = PFREQS[i];
-  lbl.textContent = `slot ${i + 1} — enter Hz, then press Enter`;
-  row.style.display = 'flex';
+  inp.style.display = 'block';
   inp.focus(); inp.select();
 }
 
-function commitEdit() {
-  const inp = document.getElementById('freq-edit-input');
+function commitEdit(i) {
+  const inp = document.getElementById('fbi' + i);
   const v = parseInt(inp.value);
   if (!isNaN(v) && v >= 100 && v <= 16000) {
-    PFREQS[editIdx] = v;
-    document.getElementById('fbl' + editIdx).textContent = fmtFreq(v);
-    if (pIdx === editIdx && pPlaying) startTone(v, pMix, pBand);
+    PFREQS[i] = v;
+    document.getElementById('fbl' + i).textContent = fmtFreq(v);
+    if (pIdx === i && pPlaying) startTone(v, pMix, pBand);
   }
-  document.getElementById('freq-edit-row').style.display = 'none';
+  inp.style.display = 'none';
 }
 
-function editKey(e) {
-  if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
-  if (e.key === 'Escape') { document.getElementById('freq-edit-row').style.display = 'none'; }
+function editKey(e, i) {
+  if (e.key === 'Enter') { e.preventDefault(); commitEdit(i); }
+  if (e.key === 'Escape') { document.getElementById('fbi' + i).style.display = 'none'; }
   e.stopPropagation();
 }
 let pIdx = 0, pPlaying = false, pMix = 0.5, pBand = 30;
