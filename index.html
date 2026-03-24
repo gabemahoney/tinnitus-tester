@@ -1102,7 +1102,7 @@ function mtBuildKeyboard() {
     key.style.height = h + 'px';
     key.dataset.i = i;
     // label keys closest to round kHz values
-    const roundKHz = [500, 1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000];
+    const roundKHz = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000];
     const isLabel = roundKHz.some(target => {
       const closest = mtFreqs.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
       return f === closest;
