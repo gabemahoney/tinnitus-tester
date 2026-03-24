@@ -99,9 +99,14 @@ header {
   gap: .6rem;
   margin-bottom: 1.8rem;
 }
+.freq-col {
+  display: flex;
+  flex-direction: column;
+}
 .freq-btn {
   background: var(--bg2);
   border: 1px solid var(--border);
+  border-bottom: none;
   color: var(--dim);
   padding: 1.8rem .5rem 1.2rem;
   cursor: pointer;
@@ -122,16 +127,11 @@ header {
 .freq-btn:hover { border-color: var(--border2); color: var(--text); }
 .freq-btn.sel { border-color: var(--border2); color: var(--text); background: var(--bg3); }
 .freq-btn.on { border-color: var(--accent); color: var(--accent); background: var(--bg3); box-shadow: 0 0 20px rgba(0,200,168,.12); }
+.freq-btn.on + .edit-freq-btn { border-color: var(--accent); }
+.freq-btn.sel + .edit-freq-btn { border-color: var(--border2); }
 
-.freq-edit-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: .6rem;
-  margin-top: -.9rem;
-  margin-bottom: 1rem;
-}
 .edit-freq-btn {
-  background: none;
+  background: var(--bg2);
   border: 1px solid var(--border);
   color: var(--dim);
   font-family: 'IBM Plex Mono', monospace;
@@ -557,19 +557,11 @@ kbd {
   <div id="panel-picker" class="panel active">
 
     <div class="freq-grid">
-      <button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">1</span><span id="fbl0">2k</span></button>
-      <button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">2</span><span id="fbl1">3k</span></button>
-      <button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">3</span><span id="fbl2">4k</span></button>
-      <button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">4</span><span id="fbl3">5k</span></button>
-      <button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">5</span><span id="fbl4">6k</span></button>
-    </div>
-
-    <div class="freq-edit-grid">
-      <button class="edit-freq-btn" onclick="startEdit(0)">edit</button>
-      <button class="edit-freq-btn" onclick="startEdit(1)">edit</button>
-      <button class="edit-freq-btn" onclick="startEdit(2)">edit</button>
-      <button class="edit-freq-btn" onclick="startEdit(3)">edit</button>
-      <button class="edit-freq-btn" onclick="startEdit(4)">edit</button>
+      <div class="freq-col"><button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">1</span><span id="fbl0">2k</span></button><button class="edit-freq-btn" onclick="startEdit(0)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">2</span><span id="fbl1">3k</span></button><button class="edit-freq-btn" onclick="startEdit(1)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">3</span><span id="fbl2">4k</span></button><button class="edit-freq-btn" onclick="startEdit(2)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">4</span><span id="fbl3">5k</span></button><button class="edit-freq-btn" onclick="startEdit(3)">edit</button></div>
+      <div class="freq-col"><button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">5</span><span id="fbl4">6k</span></button><button class="edit-freq-btn" onclick="startEdit(4)">edit</button></div>
     </div>
 
     <div class="freq-edit-row" id="freq-edit-row" style="display:none">
