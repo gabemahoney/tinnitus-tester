@@ -700,6 +700,11 @@ kbd {
 
     <div class="mt-keyboard" id="mt-keyboard"></div>
 
+    <div class="play-row" style="margin-top:1.5rem">
+      <button class="play-btn" id="mt-play-btn" onclick="mtTogglePlay()">[ Space ]&nbsp; Play</button>
+      <span class="play-status" id="mt-status">stopped</span>
+    </div>
+
     <div class="mt-info">
       <span id="mt-label">No tones selected</span>
     </div>
@@ -1079,8 +1084,9 @@ const mtFreqs = Array.from({length: MT_COUNT}, (_, i) =>
 );
 
 const mtSelected = new Set();
-const mtNodes = new Map(); // freq → {osc, nSrc, oscG, noiseG}
+const mtNodes = new Map();
 let mtLastClicked = null;
+let mtPlaying = false;
 
 function mtFmtFreq(f) {
   return f >= 1000 ? (f % 1000 === 0 ? (f/1000)+'k' : (f/1000).toFixed(1)+'k') : f+'';
@@ -1095,8 +1101,13 @@ function mtBuildKeyboard() {
     key.className = 'mt-key';
     key.style.height = h + 'px';
     key.dataset.i = i;
-    // only label every 4th key to avoid clutter
-    if (i % 4 === 0) {
+    // label keys closest to round kHz values
+    const roundKHz = [500, 1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000];
+    const isLabel = roundKHz.some(target => {
+      const closest = mtFreqs.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
+      return f === closest;
+    });
+    if (isLabel) {
       const lbl = document.createElement('span');
       lbl.className = 'mt-key-label';
       lbl.textContent = mtFmtFreq(f);
@@ -1125,7 +1136,7 @@ function mtSelect(i) {
   mtSelected.add(i);
   const key = document.querySelector(`.mt-key[data-i="${i}"]`);
   if (key) key.classList.add('on');
-  mtStartTone(i);
+  if (mtPlaying) mtStartTone(i);
 }
 
 function mtDeselect(i) {
@@ -1133,6 +1144,21 @@ function mtDeselect(i) {
   const key = document.querySelector(`.mt-key[data-i="${i}"]`);
   if (key) key.classList.remove('on');
   mtStopTone(i);
+}
+
+function mtTogglePlay() {
+  mtPlaying = !mtPlaying;
+  const btn = document.getElementById('mt-play-btn');
+  const st  = document.getElementById('mt-status');
+  if (mtPlaying) {
+    mtSelected.forEach(i => mtStartTone(i));
+    btn.textContent = '[ Space ]  Stop'; btn.classList.add('on');
+    st.textContent = 'playing'; st.classList.add('on');
+  } else {
+    mtNodes.forEach((_, i) => mtStopTone(i));
+    btn.textContent = '[ Space ]  Play'; btn.classList.remove('on');
+    st.textContent = 'stopped'; st.classList.remove('on');
+  }
 }
 
 function mtStartTone(i) {
@@ -1223,6 +1249,11 @@ function showFS(state) {
 function switchTab(tab) {
   stopTone();
   mtClearAll();
+  mtPlaying = false;
+  document.getElementById('mt-play-btn').textContent = '[ Space ]  Play';
+  document.getElementById('mt-play-btn').classList.remove('on');
+  document.getElementById('mt-status').textContent = 'stopped';
+  document.getElementById('mt-status').classList.remove('on');
   pPlaying = false; scPlaying = false; resPlaying = false;
   // reset picker UI
   document.getElementById('picker-play-btn').textContent = '[ Space ]  Play';
@@ -1248,7 +1279,7 @@ function switchTab(tab) {
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
 
-  if (e.key === ' ') { e.preventDefault(); activeTab === 'picker' ? pickerTogglePlay() : scTogglePlay(); return; }
+  if (e.key === ' ') { e.preventDefault(); if (activeTab === 'picker') pickerTogglePlay(); else if (activeTab === 'multi') mtTogglePlay(); else scTogglePlay(); return; }
   if (e.key === 'Escape' && activeTab === 'multi') { mtClearAll(); return; }
 
   if (activeTab === 'picker') {
