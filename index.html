@@ -1242,7 +1242,8 @@ function showFS(state) {
 
 function switchTab(tab) {
   stopTone();
-  mtClearAll();
+  // stop mt audio but keep selection intact
+  mtNodes.forEach((_, i) => mtStopTone(i));
   mtPlaying = false;
   document.getElementById('mt-play-btn').textContent = '[ Space ]  Play';
   document.getElementById('mt-play-btn').classList.remove('on');
