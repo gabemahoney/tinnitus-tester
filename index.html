@@ -557,11 +557,11 @@ kbd {
   <div id="panel-picker" class="panel active">
 
     <div class="freq-grid">
-      <button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">2</span><span id="fbl0">2k</span></button>
-      <button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">3</span><span id="fbl1">3k</span></button>
-      <button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">4</span><span id="fbl2">4k</span></button>
-      <button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">5</span><span id="fbl3">5k</span></button>
-      <button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">6</span><span id="fbl4">6k</span></button>
+      <button class="freq-btn sel" id="fb0" onclick="pickerSelect(0)"><span class="kh">1</span><span id="fbl0">2k</span></button>
+      <button class="freq-btn"     id="fb1" onclick="pickerSelect(1)"><span class="kh">2</span><span id="fbl1">3k</span></button>
+      <button class="freq-btn"     id="fb2" onclick="pickerSelect(2)"><span class="kh">3</span><span id="fbl2">4k</span></button>
+      <button class="freq-btn"     id="fb3" onclick="pickerSelect(3)"><span class="kh">4</span><span id="fbl3">5k</span></button>
+      <button class="freq-btn"     id="fb4" onclick="pickerSelect(4)"><span class="kh">5</span><span id="fbl4">6k</span></button>
     </div>
 
     <div class="freq-edit-grid">
@@ -605,7 +605,7 @@ kbd {
     </div>
 
     <div class="hints">
-      <kbd>2</kbd>–<kbd>6</kbd> select &nbsp;·&nbsp;
+      <kbd>1</kbd>–<kbd>5</kbd> select &nbsp;·&nbsp;
       <kbd>Space</kbd> play/stop &nbsp;·&nbsp;
       <kbd>↑</kbd><kbd>↓</kbd> noise &nbsp;·&nbsp;
       <kbd>←</kbd><kbd>→</kbd> band
@@ -1311,11 +1311,11 @@ document.addEventListener('keydown', e => {
 
   if (activeTab === 'picker') {
     switch (e.key) {
-      case '2': pickerSelect(0); break;
-      case '3': pickerSelect(1); break;
-      case '4': pickerSelect(2); break;
-      case '5': pickerSelect(3); break;
-      case '6': pickerSelect(4); break;
+      case '1': pickerSelect(0); break;
+      case '2': pickerSelect(1); break;
+      case '3': pickerSelect(2); break;
+      case '4': pickerSelect(3); break;
+      case '5': pickerSelect(4); break;
       case 'p': case 'P': pickerTogglePlay(); break;
       case 'ArrowUp':
         e.preventDefault();
