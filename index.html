@@ -1305,6 +1305,16 @@ function switchTab(tab) {
 // ═══════════════════════════════
 //  KEYBOARD
 // ═══════════════════════════════
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && ctx && ctx.state === 'suspended') {
+    ctx.resume().then(() => {
+      // restart any tones that were playing
+      if (pPlaying) startTone(PFREQS[pIdx], pMix, pBand);
+      if (mtPlaying) { mtSelected.forEach(i => mtStartTone(i)); }
+    });
+  }
+});
+
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
 
